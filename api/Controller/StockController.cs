@@ -17,17 +17,17 @@ namespace api.Controllers
             _context = context;
         }
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
         {
-            var stocks = (await _context.Stocks.ToListAsync())
+            var stocks = (await _context.Stocks.ToListAsync(cancellationToken))
                 .Select(s => s.ToStockDto());
             return Ok(stocks);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById(int id, CancellationToken cancellationToken)
         {
-            var stock = await _context.Stocks.FindAsync(id);
+            var stock = await _context.Stocks.FindAsync([id], cancellationToken);
             if (stock == null)
             {
                 return NotFound();
@@ -35,17 +35,18 @@ namespace api.Controllers
             return Ok(stock.ToStockDto());
         }
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateStockRequestDto stockDto)
-        {            var stock = stockDto.ToStockFromCreateDTO();
-            _context.Stocks.Add(stock);
-            await _context.SaveChangesAsync();
+        public async Task<IActionResult> Create([FromBody] CreateStockRequestDto stockDto, CancellationToken cancellationToken)
+        {
+            var stock = stockDto.ToStockFromCreateDTO();
+            await _context.Stocks.AddAsync(stock, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
             return Ok(stock.ToStockDto());
         }
         [HttpPut]
         [Route("{id}")]
-        public async Task<IActionResult> Update([FromRoute] int id,[FromBody] UpdateStockDto stockDto)
+        public async Task<IActionResult> Update([FromRoute] int id,[FromBody] UpdateStockDto stockDto, CancellationToken cancellationToken)
         {
-            var stock = await _context.Stocks.FindAsync(id);
+            var stock = await _context.Stocks.FindAsync([id], cancellationToken);
             if (stock == null)
             {
                 return NotFound();
@@ -57,14 +58,14 @@ namespace api.Controllers
             stock.Industry = stockDto.Industry;
             stock.MarketCap = stockDto.MarketCap;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return Ok(stock.ToStockDto());
         }
 
         [HttpPatch("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Stock updatedStock)
+        public async Task<IActionResult> Update(int id, [FromBody] Stock updatedStock, CancellationToken cancellationToken)
         {
-            var stock = await _context.Stocks.FindAsync(id);
+            var stock = await _context.Stocks.FindAsync([id], cancellationToken);
             if (stock == null)
             {
                 return NotFound();
@@ -76,21 +77,21 @@ namespace api.Controllers
             stock.Industry = updatedStock.Industry;
             stock.MarketCap = updatedStock.MarketCap;
 
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return Ok(stock.ToStockDto());
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var stock = await _context.Stocks.FindAsync(id);
+            var stock = await _context.Stocks.FindAsync([id], cancellationToken);
             if (stock == null)
             {
                 return NotFound();
             }
 
             _context.Stocks.Remove(stock);
-            await _context.SaveChangesAsync();
+            await _context.SaveChangesAsync(cancellationToken);
             return Ok(stock.ToStockDto());
         }
     }
